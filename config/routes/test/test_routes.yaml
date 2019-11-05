@@ -1,0 +1,7 @@
+app.test.sidebar_settings:
+    path: /{_locale}/sidebar/settings
+    controller: App\Controller\SidebarController::settingsAction
+    requirements:
+        _locale: '%app_locales%'
+    defaults:
+        _locale: '%locale%'

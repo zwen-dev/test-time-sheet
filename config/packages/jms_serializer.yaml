@@ -1,0 +1,24 @@
+jms_serializer:
+    handlers:
+        datetime:
+            default_format: 'Y-m-d\TH:i:sO' # DATE_ISO8601
+    visitors:
+        xml_serialization:
+            format_output: '%kernel.debug%'
+    metadata:
+        directories:
+            FOSUB:
+                namespace_prefix: "FOS\\UserBundle"
+                path: "%kernel.root_dir%/../config/serializer/FOS/UserBundle"
+            App:
+                namespace_prefix: "App"
+                path: "%kernel.root_dir%/../config/serializer/App"
+        warmup:
+            paths:
+                included:
+                    - "%kernel.root_dir%/Entity/"
+                    - "%kernel.root_dir%/API/Model/"
+                    - "%kernel.root_dir%/../vendor/friendsofsymfony/user-bundle/Model"
+                excluded: []
+    property_naming:
+        id: 'jms_serializer.identical_property_naming_strategy'

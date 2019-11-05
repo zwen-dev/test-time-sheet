@@ -1,0 +1,13 @@
+App\Entity\User:
+    properties:
+        roles:
+            - App\Validator\Constraints\Role: ~
+        username:
+            - NotBlank: ~
+            - Length: { min: 3, max: 60 }
+        email:
+            - NotBlank: ~
+            - Email: ~
+        plainPassword:
+            - NotBlank: { groups: [Registration, PasswordUpdate] }
+            - Length: { min: 8, max: 60, groups: [Registration, PasswordUpdate] }

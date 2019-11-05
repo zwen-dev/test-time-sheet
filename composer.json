@@ -1,0 +1,146 @@
+{
+    "name": "kevinpapst/kimai2",
+    "license": "MIT",
+    "type": "project",
+    "description": "Kimai Time-Tracking 2",
+    "authors": [
+        {
+            "name": "Kevin Papst",
+            "homepage": "https://www.kevinpapst.de"
+        }
+    ],
+    "require": {
+        "php": "^7.2",
+        "ext-gd": "*",
+        "ext-intl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
+        "ext-zip": "*",
+        "beberlei/doctrineextensions": "^1.2",
+        "erusev/parsedown": "^1.6",
+        "friendsofsymfony/rest-bundle": "^2.5",
+        "friendsofsymfony/user-bundle": "dev-master",
+        "gedmo/doctrine-extensions": "^2.4",
+        "jms/metadata": "^2.0",
+        "jms/serializer-bundle": "^3.2",
+        "kevinpapst/adminlte-bundle": "~3.0",
+        "kimai/kimai2-composer": "^0.1",
+        "laravolt/avatar": "^3.0",
+        "mpdf/mpdf": "^7.1",
+        "nelmio/api-doc-bundle": "^3.2",
+        "nelmio/cors-bundle": "^1.5",
+        "ocramius/proxy-manager": "2.1.1",
+        "phpoffice/phpspreadsheet": "^1.4",
+        "phpoffice/phpword": "^0.15.0",
+        "psr/log": "^1.1",
+        "sensio/framework-extra-bundle": "^5.2",
+        "symfony/asset": "^4.0",
+        "symfony/console": "^4.0",
+        "symfony/debug-pack": "^1.0",
+        "symfony/dotenv": "^4.0",
+        "symfony/expression-language": "^4.0",
+        "symfony/flex": "^1.0",
+        "symfony/form": "^4.0",
+        "symfony/framework-bundle": "^4.0",
+        "symfony/intl": "^4.0",
+        "symfony/monolog-bundle": "^3.4",
+        "symfony/orm-pack": "^1.0",
+        "symfony/security-bundle": "^4.0",
+        "symfony/security-csrf": "^4.0",
+        "symfony/serializer": "^4.0",
+        "symfony/swiftmailer-bundle": "^3.2",
+        "symfony/translation": "^4.0",
+        "symfony/twig-bundle": "^4.0",
+        "symfony/validator": "^4.0",
+        "symfony/webpack-encore-bundle": "^1.5",
+        "symfony/yaml": "^4.0",
+        "twig/extensions": "^1.5",
+        "white-october/pagerfanta-bundle": "^1.1"
+    },
+    "require-dev": {
+        "dama/doctrine-test-bundle": "^5.0",
+        "doctrine/doctrine-fixtures-bundle": "^3.2",
+        "friendsofphp/php-cs-fixer": "^2.10",
+        "fzaninotto/faker": "^1.8",
+        "phpstan/phpstan": "^0.11.7",
+        "phpstan/phpstan-doctrine": "^0.11.4",
+        "phpstan/phpstan-phpunit": "^0.11.2",
+        "phpstan/phpstan-symfony": "^0.11.6",
+        "phpunit/phpunit": "^8.0",
+        "symfony/browser-kit": "^4.0",
+        "symfony/css-selector": "^4.0",
+        "symfony/maker-bundle": "^1.12",
+        "symfony/phpunit-bridge": "^4.0",
+        "symfony/profiler-pack": "^1.0",
+        "symfony/thanks": "^1.0",
+        "symfony/web-server-bundle": "^4.0"
+    },
+    "config": {
+        "platform": {
+            "php": "7.2"
+        },
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/",
+            "KimaiPlugin\\": "var/plugins/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "replace": {
+        "symfony/polyfill-iconv": "*",
+        "symfony/polyfill-php71": "*",
+        "symfony/polyfill-php70": "*",
+        "symfony/polyfill-php56": "*"
+    },
+    "suggest": {
+        "ext-mbstring": "If ext-mbstring is not available you MUST install symfony/polyfill-mbstring",
+        "zendframework/zend-ldap": "For LDAP authentication with Kimai"
+    },
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install": "symfony-cmd"
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ],
+        "kimai:code-check":  [
+            "@kimai:codestyle",
+            "@kimai:phpstan",
+            "@kimai:tests-unit",
+            "@kimai:tests-integration"
+        ],
+        "kimai:tests": "vendor/bin/phpunit tests/",
+        "kimai:tests-unit": "vendor/bin/phpunit --exclude-group integration tests/",
+        "kimai:tests-integration": "vendor/bin/phpunit --group integration tests/",
+        "kimai:phpstan": [
+            "vendor/bin/phpstan analyse src -c phpstan.neon --level=3",
+            "vendor/bin/phpstan analyse tests -c tests/phpstan.neon --level=4"
+        ],
+        "kimai:codestyle": "vendor/bin/php-cs-fixer fix --dry-run --verbose --show-progress=none",
+        "kimai:codestyle-fix": "vendor/bin/php-cs-fixer fix"
+    },
+    "conflict": {
+        "symfony/symfony": "*"
+    },
+    "extra": {
+        "symfony": {
+            "id": "01C3FWRDJJEX9K6Y3A4XDFXPBR",
+            "allow-contrib": true,
+            "require": "4.3.*"
+        }
+    }
+}

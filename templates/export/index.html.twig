@@ -1,0 +1,237 @@
+{% extends 'base.html.twig' %}
+{% import "macros/widgets.html.twig" as widgets %}
+{% import "macros/toolbar.html.twig" as toolbar %}
+{% import "macros/datatables.html.twig" as tables %}
+{% import "export/actions.html.twig" as actions %}
+
+{% set columns = {
+    'date': 'alwaysVisible',
+    'user': 'hidden-xs hidden-sm',
+    'customer': 'hidden-xs hidden-sm',
+    'project': 'hidden-xs hidden-sm',
+    'activity': 'hidden-xs hidden-sm',
+    'description': 'hidden-xs hidden-sm',
+    'unit_price': 'hidden-xs',
+    'duration': '',
+    'total_rate': '',
+    'exported': 'alwaysVisible',
+} %}
+
+{% set tableName = 'export' %}
+
+{% block page_title %}{{ 'export.title'|trans }}{% endblock %}
+{% block page_subtitle %}{{ 'export.subtitle'|trans }}{% endblock %}
+{% block page_actions %}{{ actions.export((preview_show ? 'preview' : 'index')) }}{% endblock %}
+
+{% block main %}
+
+    {% embed '@AdminLTE/Widgets/box-widget.html.twig' %}
+        {% form_theme form '@AdminLTE/layout/form-theme-horizontal.html.twig' %}
+        {% block box_title %}{{ 'export.filter'|trans }}{% endblock %}
+        {% block box_before %}{{ form_start(form) }}{% endblock %}
+        {% block box_body %}
+            {{ form_row(form.searchTerm) }}
+            {{ form_row(form.daterange) }}
+            {{ form_row(form.customer) }}
+            {{ form_row(form.project) }}
+            {{ form_row(form.activity) }}
+            {{ form_row(form.users) }}
+            {{ form_row(form.tags) }}
+            {{ form_row(form.exported) }}
+            {{ form_row(form.state) }}
+            {{ form_row(form.markAsExported) }}
+        {% endblock %}
+        {% block box_footer%}
+            <div class="btn-group" id="export-buttons" role="group">
+                {% for button in renderer %}
+                    <button type="button" id="export-{{ button.id }}-button" class="btn btn-success startExportBtn" data-type="{{ button.id }}">
+                        {{ ('button.' ~ button.title)|trans }}
+                    </button>
+                {% endfor %}
+            </div>
+            {{ form_widget(form.preview) }}
+        {% endblock %}
+        {% block box_after %}{{ form_end(form) }}{% endblock %}
+    {% endembed %}
+
+    {% if preview_show %}
+        {% if entries is empty %}
+            {{ widgets.callout('warning', 'error.no_entries_found') }}
+        {% else %}
+            {{ tables.data_table_header(tableName, columns) }}
+            {% for entry in entries %}
+                {% set currency = entry.project.customer.currency %}
+                {% set duration = entry.duration|duration %}
+                {% if entry.fixedRate is not null %}
+                    {% set rate = entry.fixedRate %}
+                    {% set duration = 1 %}
+                {% elseif entry.hourlyRate is not null %}
+                    {% set rate = entry.hourlyRate %}
+                {% else %}
+                    {% set rate = entry.user.preferenceValue('hourly_rate') %}
+                {% endif %}
+                <tr>
+                    <td class="text-nowrap">{{ entry.begin|date_short }}</td>
+                    <td class="{{ tables.data_table_column_class(tableName, columns, 'user') }}">{{ widgets.label_user(entry.user) }}</td>
+                    <td class="{{ tables.data_table_column_class(tableName, columns, 'customer') }}">{{ widgets.label_customer(entry.project.customer) }}</td>
+                    <td class="{{ tables.data_table_column_class(tableName, columns, 'project') }}">{{ widgets.label_project(entry.project) }}</td>
+                    <td class="{{ tables.data_table_column_class(tableName, columns, 'activity') }}">{{ widgets.label_activity(entry.activity) }}</td>
+                    <td class="{{ tables.data_table_column_class(tableName, columns, 'description') }} timesheet-description">
+                        {{ entry.description|escape|desc2html }}
+                    </td>
+                    <td class="{{ tables.data_table_column_class(tableName, columns, 'unit_price') }} text-nowrap">
+                        {{ rate|money(currency) }}
+                    </td>
+                    <td class="{{ tables.data_table_column_class(tableName, columns, 'duration') }} text-nowrap">
+                        {{ duration }}
+                    </td>
+                    <td class="{{ tables.data_table_column_class(tableName, columns, 'total_rate') }} text-nowrap">
+                        {{ entry.rate|money(currency) }}
+                    </td>
+                    <td>
+                    {% if is_granted('edit_export', entry) %}
+                        {% if entry.exported %}
+                            <button type="button" class="btn btn-default exportBtn active" data-toggle="button" aria-pressed="true" autocomplete="off"
+                                    data-exported-text="{{ 'entryState.exported'|trans }}" data-clean-text="{{ 'entryState.not_exported'|trans }}" data-timesheet="{{ entry.id }}">
+                            {{ 'entryState.exported'|trans }}
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn btn-default exportBtn" data-toggle="button" aria-pressed="false" autocomplete="off"
+                                    data-exported-text="{{ 'entryState.exported'|trans }}" data-clean-text="{{ 'entryState.not_exported'|trans }}" data-timesheet="{{ entry.id }}">
+                            {{ 'entryState.not_exported'|trans }}
+                            </button>
+                        {% endif %}
+                    {% else %}
+                        {% if entry.exported %}
+                            {{ 'entryState.exported'|trans }}
+                        {% else %}
+                            {{ 'entryState.not_exported'|trans }}
+                        {% endif %}
+                    {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            {{ tables.data_table_footer(entries) }}
+        {% endif %}
+    {% endif %}
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+
+        function confirmToggleState(button)
+        {
+            var ALERT = kimai.getPlugin('alert');
+            var message = '{{ 'export.clear_all'|trans }}';
+            var hasActive = true;
+
+            if (!$('#export-toggle-button').hasClass('export-off')) {
+                message = '{{ 'export.mark_all'|trans }}';
+                hasActive = false;
+            }
+
+            ALERT.question(message, function(value) {
+                if (!value) {
+                    return;
+                }
+                var btn = $(button);
+                var exportButtons = $('.exportBtn');
+                // disabling does not yet work...
+                if (exportButtons.length > 0) {
+                    btn.addClass('disabled');
+                }
+
+                // ... as the clicks are asynchronous and the each comes back too early ...
+                exportButtons.each(function () {
+                    if (hasActive === $(this).hasClass('active')) {
+                        $(this).click();
+                    }
+                });
+
+                // ... so the button is re-enabled immediately - that should be fixed in a future update
+                btn.removeClass('disabled');
+                if (btn.hasClass('export-off')) {
+                    btn.removeClass('export-off');
+                    btn.html('<i class="fas fa-toggle-off"></i>');
+                } else {
+                    btn.addClass('export-off');
+                    btn.html('<i class="fas fa-toggle-on"></i>');
+                }
+            });
+        }
+
+        function updateTimesheetExportState(button, id, exported)
+        {
+            var ALERT = kimai.getPlugin('alert');
+
+            // FIXME use Kimai API plugin
+            $.ajax({
+                url: '{{ path('export_timesheet', {id: '-s-'}) }}'.replace('-s-', id),
+                headers: {
+                    'X-AUTH-SESSION': true,
+                    'Content-Type':'application/json'
+                },
+                method: 'PATCH',
+                success: function(data) {
+                    if (exported) {
+                        button.button('exported');
+                    } else {
+                        button.button('clean');
+                    }
+                    if ($('select#exported').val() !== '{{ constant('App\\Repository\\Query\\TimesheetQuery::STATE_ALL') }}') {
+                        button.closest('tr').hide('ease', function() {
+                            $(this).remove();
+                            if($(this).closest('table').find('tbody tr:visible').length === 0) {
+                                $('#export-buttons button').prop('disabled', true);
+                            }
+                        });
+                    }
+                }, error: function(jqXHR, textStatus, errorThrown) {
+                    var message = 'An error occured';
+                    if (jqXHR.responseJSON !== undefined) {
+                        message = jqXHR.responseJSON.message;
+                        if (jqXHR.responseJSON.errors !== undefined)
+                        {
+                            var errors = jqXHR.responseJSON.errors.errors;
+                            for (var i = 0; i < errors.length; i++) {
+                                message += ' / ' + errors[i];
+                            }
+                        }
+                    }
+                    ALERT.error('{{ 'action.update.error'|trans({}, 'flashmessages') }}', message);
+                    button.button('reset');
+                    if (exported) {
+                        button.removeClass('active');
+                    } else {
+                        button.addClass('active');
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('kimai.initialized', function() {
+            $('body').on('click', '.exportBtn', function() {
+                var button = $(this);
+                var id = button.attr('data-timesheet');
+                updateTimesheetExportState(button, id, !button.hasClass('active'));
+            });
+
+            $('#export-toggle-button').on('click', function () {
+                confirmToggleState(this);
+            });
+
+            $('body').on('click', '#export-buttons .startExportBtn', function() {
+                $('#type').val($(this).attr('data-type'));
+                var $form = $("#export-form");
+                var prevAction = $form.attr('action');
+                var prevMethod = $form.attr('method');
+                $form.attr('target', '_blank').attr('method', 'POST').attr('action', '{{ path('export_data') }}');
+                $form.submit();
+                $('#type').val('');
+                $form.removeAttr('target').attr('action', prevAction).attr('method', prevMethod);
+            });
+        });
+    </script>
+{% endblock %}
